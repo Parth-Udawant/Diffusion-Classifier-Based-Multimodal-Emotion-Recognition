@@ -15,10 +15,6 @@ from transformers import (
 
 from decord import VideoReader, cpu
 
-########################################
-# PATHS
-########################################
-
 AUDIO_PATH = "/media/csedept/cse2016/AV_RP/crema-d-mirror/AudioWAV"
 VIDEO_PATH = "/media/csedept/cse2016/AV_RP/crema-d-mirror/VideoFlash"
 
@@ -29,20 +25,12 @@ OUTPUT_DIR = "/media/csedept/cse2016/AV_RP/aligned_embeddings"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-########################################
-# CONFIG
-########################################
-
 SAMPLE_RATE = 16000
 MAX_AUDIO_LENGTH = 5.0
 NUM_FRAMES = 16
 BATCH_SIZE = 8
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-########################################
-# LABEL MAP
-########################################
 
 EMOTION_MAP = {
     "ANG":0,
@@ -52,10 +40,6 @@ EMOTION_MAP = {
     "SAD":4,
     "NEU":5
 }
-
-########################################
-# AUDIO MODEL
-########################################
 
 class AttentiveStatsPooling(nn.Module):
 
@@ -111,11 +95,6 @@ class WavLMClassifier(nn.Module):
         logits = self.classifier[4](embedding)
 
         return logits
-
-
-########################################
-# VIDEO MODEL (IDENTICAL TO TRAINING)
-########################################
 
 class AttentivePooling(nn.Module):
 
@@ -176,11 +155,6 @@ class VideoMAEStable(nn.Module):
 
         return logits
 
-
-########################################
-# DATASET SPLIT (ACTOR INDEPENDENT)
-########################################
-
 def get_split():
 
     files = sorted([f for f in os.listdir(AUDIO_PATH) if f.endswith(".wav")])
@@ -213,18 +187,8 @@ def get_split():
 
     return train,val,test
 
-
-########################################
-# FEATURE EXTRACTORS
-########################################
-
 audio_processor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-large")
 video_processor = VideoMAEImageProcessor.from_pretrained("MCG-NJU/videomae-large")
-
-
-########################################
-# AUDIO PROCESSING
-########################################
 
 def process_audio(path):
 
@@ -252,11 +216,6 @@ def process_audio(path):
 
     return inputs.input_values.squeeze(0)
 
-
-########################################
-# VIDEO PROCESSING
-########################################
-
 def process_video(path):
 
     vr = VideoReader(path,ctx=cpu(0))
@@ -270,11 +229,6 @@ def process_video(path):
     inputs = video_processor(list(frames),return_tensors="pt")
 
     return inputs["pixel_values"].squeeze(0)
-
-
-########################################
-# EXTRACTION
-########################################
 
 def extract(split_name,files,audio_model,video_model):
 
@@ -317,11 +271,6 @@ def extract(split_name,files,audio_model,video_model):
     np.save(f"{OUTPUT_DIR}/{split_name}_labels.npy",labels)
 
     print(split_name,"done",audio_emb.shape)
-
-
-########################################
-# MAIN
-########################################
 
 def main():
 
